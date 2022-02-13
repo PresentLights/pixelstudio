@@ -101,7 +101,7 @@
            |            |  1 |  0 |  MATH  |  rhythme is present, so we can accentuate the  |       |
            |            |    |    |        |  pulsation to bring joy at dancing             |       |
            |            |    |    |        |  this mode is a "world first" algorithm        |       |
-           |            |  1 |  1 |    -   |  not implemented                               |       |
+           |            |  1 |  1 |  LOST  |  The sound dynamic is too low, safe fail mode  |       |
            |             -------------------------------------------------------------------        |                                                                   |
            |                                                                                        |
            |       o SYNC (Digital output)                                                          |
@@ -114,15 +114,10 @@
            |                 _____                         _____                                    |
            |             ___|     |_______________________|     |_______________  MATH ok           |
            |                                                                                        |
-           |            NOTE : This signal can be use for incremental actions, but if your          |
-           |            application need transition counters, you will need to read the delay       |
-           |            and thus code your own tapsync, what becomes very difficult to              |
-           |            phase synchronize without glitchs on BPM variations                         |
-           |                                                                                        |
            |                                                                                        |
            |       o SHAPE (Analog output 0->3.3V)                                                  |
            |            -This signal represent the shape of the volume amplitude, it is very        |
-           |            usefull when we don't have yet the rhythme. It is widely used in standart   |
+           |            usefull when we don't have yet the rhythme. It is widely used in standard   |
            |            lighting applications as sound reactive blinking                            |
            |                                                                                        |
            |                                                                                        |
@@ -174,36 +169,14 @@
         \(   _.-"  -shimrod   * _|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___| 
          `--"                 *|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
 ***********************************************************O**********************************************************/  
-
 #pragma once
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 #include "Arduino.h"
 #include <stdint.h>
 #include "Tools.h"
-
-/********************************************************************
-                    BEAT TRAKCER PRO PINMAP
-                               _ _ /--\
-                      \/_ _ _/(_(_(_o o)
-                       (_(_(_(/      ^
-**********************************O*********************************/
-//#define DEVICE_ID       1
-
-
-/*
-#define SAW_PIN         A0 
-#define SHAPE_PIN       A1
-#define M1_PIN          12
-#define M0_PIN          11
-#define PIN_STRIP_1     39
-#define PIN_STRIP_2     41
-#define PIN_STRIP_3     43
-#define PIN_ANALOG_ENABLED     45
-*/
 /********************************************************************
                              DEFINITIONS
                               .----.-.
@@ -211,20 +184,17 @@ extern "C" {
                             '|  __ ` ||
                              |||  ||| -'
 **********************************O*********************************/
+//Modes (music mood)
 #define MODE_CALM   0
 #define MODE_SCAN   1
 #define MODE_MATH   2
 #define MODE_LOST   3
 
-
-//Calibration (non full range AOP outputs)
+//Analog Input Calibration (non full range hardware)
 #define VOLUME_CALIB_MIN  150
 #define VOLUME_CALIB_MAX  1023
 #define SAW_CALIB_MIN  0
 #define SAW_CALIB_MAX  945
-
-//Speed of dynamic decrease
-#define DYNAMIC_DECREMENT  20
 
 //MEMORY
 #define PALETTE_SIZE       9
@@ -234,7 +204,7 @@ extern "C" {
 #define PROMPT_NB_CAR_MAX   50
 #define PROMPT_NB_FIELDS  3
 
-//PROTOCOL
+//ANALOG DESIGN PROTOCOL
 #define AD_MODE         0
 #define AD_PROGRAM      1
 #define AD_TIME         2
@@ -247,11 +217,12 @@ extern "C" {
 #define AD_DICES_4       10
 #define AD_DICES_16      11
 
-
 //APPLICATION CONTROL
 #define CONTROL_MODE_AUTO     0
 #define CONTROL_MODE_MANUAL   1
 
+//SIGNAL DECODE
+#define DYNAMIC_DECREMENT  20  //Speed of dynamic decrease 
 
 /********************************************************************
                                STRUCTURES
@@ -305,8 +276,8 @@ typedef struct
     uint8_t volumeRangeMax;    //Max value inside input buffer (input[INPUT_BUFFER_SIZE])
     uint8_t scaledVolume;      //expanded volume from 0 to 255 instead of volumeRangeMin to volumeRangeMax
 
-    //SOLFEGE TIME
-    //pulsation counters
+    //SOLFEGE
+    //rythmical values
     uint8_t t,t2,t4,t8,t16;
 
     //MODES
@@ -335,8 +306,6 @@ typedef struct
     uint8_t hexDices4[4];
     uint8_t hexDices16[16];
     
-    uint8_t lastPathOnset;
-
     //PROGRAM CONTROL
     uint8_t controlMode;
     uint8_t masterControlMode;
@@ -387,7 +356,7 @@ typedef struct
                      jgs        `V-'`'\/``
 **********************************O*********************************/
 void BTP_Setup(int16_t pinSaw,int16_t pinShape,int16_t pinM0,int16_t pinM1);
-void AD_Loop();
+void BTP_Loop();
 void BTP_InitPalette();
 
 void BTP_Prompt_SendBlackout();
@@ -395,14 +364,14 @@ void BTP_Prompt_SendManualIndex();
 void BTP_Prompt_SendControlMode();
 void BTP_Prompt_SendDices();
 
-Color AD_GetColor(uint8_t index);
-uint8_t AD_GetRollColorID_4To2(uint8_t index);
-Color AD_GetRollColor_4To2(uint8_t index);
-Color AD_GetDynamicColor(uint8_t index);
+Color BTP_GetColor(uint8_t index);
+uint8_t BTP_GetRollColorID_4To2(uint8_t index);
+Color BTP_GetRollColor_4To2(uint8_t index);
+Color BTP_GetDynamicColor(uint8_t index);
 uint8_t BTP_ReadInput(uint8_t x);
-uint8_t AD_ReadRangedInput(uint8_t x);
+uint8_t BTP_ReadRangedInput(uint8_t x);
 
-void AD_ProgramRandomReload();
+void BTP_ProgramRandomReload();
 
 //PROMPT
 void BTP_Prompt_FurnishByte(uint8_t car);

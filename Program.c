@@ -367,7 +367,7 @@ void Execute_Program_Template()
   Output o1;
   Output_Preset(&o1, MAP_BAR_ALL);
   uint8_t x1 = SignalPlay_Bounce(BLANCHE,0); //0-255
-  Paint_Plot(x1, AD_GetColor(0), &o1);
+  Paint_Plot(x1, BTP_GetColor(0), &o1);
 }
 */
 
@@ -442,8 +442,8 @@ void Execute_Program_Dance2()
       Mapping_Preset(&m1, MAP_BAR_LEFT);
       Mapping_Preset(&m2, MAP_BAR_RIGHT);
       x1 = SignalPlay_TripConcave(BLANCHE,1,0);
-      Paint_Plot(x1, AD_GetRollColor_4To2(0), &m1);
-      Paint_Plot(x1, AD_GetRollColor_4To2(1), &m2);
+      Paint_Plot(x1, BTP_GetRollColor_4To2(0), &m1);
+      Paint_Plot(x1, BTP_GetRollColor_4To2(1), &m2);
       break;
   }
   
@@ -494,8 +494,8 @@ void Execute_Program_Dance4()
       Mapping_Preset(&m1, MAP_BAR_LEFT);
       Mapping_Preset(&m2, MAP_BAR_RIGHT);
       x1 = SignalPlay_Trip(BLANCHE,0);
-      Paint_Plot(x1, AD_GetRollColor_4To2(0), &m1);
-      Paint_Plot(x1, AD_GetRollColor_4To2(1), &m2);
+      Paint_Plot(x1, BTP_GetRollColor_4To2(0), &m1);
+      Paint_Plot(x1, BTP_GetRollColor_4To2(1), &m2);
       break;
   }
 
@@ -588,8 +588,8 @@ void Execute_Program_Pulse()
       break;
   }
   
-  Paint_PlotPersist(x1, AD_GetRollColorID_4To2(0), &m1, L0);
-  Paint_PlotPersist(x2, AD_GetRollColorID_4To2(1), &m1, L1);
+  Paint_PlotPersist(x1, BTP_GetRollColorID_4To2(0), &m1, L0);
+  Paint_PlotPersist(x2, BTP_GetRollColorID_4To2(1), &m1, L1);
 }
 
 
@@ -650,10 +650,10 @@ void Execute_Program_Flash()
   Mapping_Preset(&m2, MAP_BAR_EXT);
   uint8_t x1 = SignalPlay_Bounce(BLANCHE,0);
   uint8_t x2 = SignalPlay_Bounce(BLANCHE,128);
-  Color c1 = AD_GetColor(0);
+  Color c1 = BTP_GetColor(0);
   float dim = (float)(255-x2)/255;
   c1 = Color_Brightness(c1,dim);
-  Color c2 = AD_GetColor(1);
+  Color c2 = BTP_GetColor(1);
   dim = (float)(255-x1)/255;
   c2 = Color_Brightness(c2,dim);
   //A beam permit to fill a region between 2 plots
@@ -689,13 +689,13 @@ void Execute_Program_Volume()
   {
     //Read differents regions of the volume record
     //The value is scaled whit min & max to avoid low dynamics
-    uint8_t vol = AD_ReadRangedInput(i*20+1)>>1;
+    uint8_t vol = BTP_ReadRangedInput(i*20+1)>>1;
     switch(i)
     {
-      case 0:Paint_Bean(128-vol,128+vol, AD_GetDynamicColor(0), &m1);break;
-      case 1:Paint_Bean(128-vol,128+vol, AD_GetDynamicColor(1), &m2);break;
-      case 2:Paint_Bean(128-vol,128+vol, AD_GetDynamicColor(2), &m3);break;
-      case 3:Paint_Bean(128-vol,128+vol, AD_GetDynamicColor(3), &m4);break;
+      case 0:Paint_Bean(128-vol,128+vol, BTP_GetDynamicColor(0), &m1);break;
+      case 1:Paint_Bean(128-vol,128+vol, BTP_GetDynamicColor(1), &m2);break;
+      case 2:Paint_Bean(128-vol,128+vol, BTP_GetDynamicColor(2), &m3);break;
+      case 3:Paint_Bean(128-vol,128+vol, BTP_GetDynamicColor(3), &m4);break;
     }
   }
 }
@@ -743,7 +743,7 @@ void Execute_Program_Reactive()
       OnsetFlash *f = sh->flash;
       if (f->active)
       {
-        Color color = AD_GetColor(sh->colorId);
+        Color color = BTP_GetColor(sh->colorId);
         color = Color_Brightness(color, f->intensity);
         uint8_t width = sh->width*f->intensity;
         Mapping_Preset(&m1, sh->mappingPreset); //output on randomly predefined map
@@ -783,10 +783,8 @@ void Execute_Program_Pattern()
 
   
   int i;
-  if (btp.onset)// && btp.lastPathOnset != pathIndex)
-//  if (btp.lastPathOnset != pathIndex)
+  if (btp.onset)
   {
-    
     //Flash creation on onset detection
     OnsetFlash *f = NewFlash();
     if (f)
@@ -795,17 +793,12 @@ void Execute_Program_Pattern()
       Shuttle *sh = NewShuttle();
       if (sh)
       {
-      //  Debug("Path Index ",pathIndex);
-
         //Random shuttle initialization
         sh->flash = f;
         sh->colorId = pathPos;
         sh->mappingPreset = pathMap + 1;
         sh->pos = pos;
         sh->width = btp.dynamicStrength;
-
-        btp.lastPathOnset = pathIndex;
-         
       }
     }
   }
@@ -825,7 +818,7 @@ void Execute_Program_Pattern()
       OnsetFlash *f = sh->flash;
       if (f->active)
       {
-        Color color = AD_GetColor(sh->colorId);
+        Color color = BTP_GetColor(sh->colorId);
         color = Color_Brightness(color, f->intensity);
         uint8_t width = sh->width*f->intensity;
         Mapping_Preset(&m1, sh->mappingPreset); //output on randomly predefined map
@@ -862,10 +855,10 @@ void Execute_Program_Pride()
   Mapping_Preset(&m3, MAP_BAR_3);
   Mapping_Preset(&m4, MAP_BAR_4);
   //Paint a full degrade between two colors
-  Paint_Degrade(AD_GetColor(0),AD_GetColor(1), &m1);
-  Paint_Degrade(AD_GetColor(1),AD_GetColor(2), &m2);
-  Paint_Degrade(AD_GetColor(2),AD_GetColor(3), &m3);
-  Paint_Degrade(AD_GetColor(3),AD_GetColor(0), &m4);
+  Paint_Degrade(BTP_GetColor(0),BTP_GetColor(1), &m1);
+  Paint_Degrade(BTP_GetColor(1),BTP_GetColor(2), &m2);
+  Paint_Degrade(BTP_GetColor(2),BTP_GetColor(3), &m3);
+  Paint_Degrade(BTP_GetColor(3),BTP_GetColor(0), &m4);
 }
 
 //USER+
@@ -920,7 +913,7 @@ void Execute_Program_Drops()
     Layer *l = &mm.currentUniverse->layers[mappingID];
     l->effect = LAYER_EFFECT_PERSIST;
     l->colorID = colorID;
-    Color color = AD_GetColor(colorID);
+    Color color = BTP_GetColor(colorID);
     Layer_FeedPersist(l, x, color, false);
   
   }
@@ -968,9 +961,9 @@ void Execute_Program_Explode()
   uint8_t x2 = SignalPlay_Explode(BLANCHE,128);
 
   //Draw two plots on two mappings, with the first and second colors of the actual palette
-  Paint_Plot(x1, AD_GetRollColor_4To2(0), &m1);
-  Paint_Plot(x2, AD_GetRollColor_4To2(1), &m1);
-//Color AD_GetRollColor_4To2(uint8_t index);
+  Paint_Plot(x1, BTP_GetRollColor_4To2(0), &m1);
+  Paint_Plot(x2, BTP_GetRollColor_4To2(1), &m1);
+//Color BTP_GetRollColor_4To2(uint8_t index);
 }
 
 
@@ -1047,7 +1040,7 @@ void Execute_Program_Snakes()
           uint8_t compressSync = Signal_Compress(sync, true);
 
           
-          Color color = AD_GetColor(sh->colorId);
+          Color color = BTP_GetColor(sh->colorId);
           float intensity = MapFloat(compressSync,0,255,0,1);
           color = Color_Brightness(color, intensity);
         
@@ -1087,8 +1080,8 @@ void Execute_Program_Linear()
   Mapping_Preset(&m1, MAP_BAR_LEFT);
   Mapping_Preset(&m2, MAP_BAR_RIGHT);
   uint8_t x1 = SignalPlay_Trip(BLANCHE,0);
-  Paint_Plot(x1, AD_GetRollColor_4To2(0), &m1);
-  Paint_Plot(x1, AD_GetRollColor_4To2(1), &m2);
+  Paint_Plot(x1, BTP_GetRollColor_4To2(0), &m1);
+  Paint_Plot(x1, BTP_GetRollColor_4To2(1), &m2);
 }
 
 
