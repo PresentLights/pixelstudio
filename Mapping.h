@@ -135,6 +135,10 @@ extern "C" {
                             '|  __ ` ||
                              |||  ||| -'
 **********************************O*********************************/
+//USER...
+#define STRIP_BAR_NB_LEDS_MAX      168      //Size of the unique ledstrip
+
+#define NB_UNIVERSES    3
 
 
 //STARTUP MULTIPLE CONFIGURATIONS
@@ -156,9 +160,8 @@ extern "C" {
 #define MAP_BAR_ALL           11
 
 //MEMORY
-#define MAPPING_NB_MAX            4 
-#define STRIP_BAR_NB_LEDS_MAX     180      //Size of the unique ledstrip
-#define NB_UNIVERSES              3
+#define MAPPING_NB_MAX        4 //In this example we don't need more
+
 
 //LAYERS
 #define NB_LAYERS         4
@@ -168,6 +171,7 @@ extern "C" {
 #define LAYER_EFFECT_PERSIST    0
 #define LAYER_EFFECT_DEGRADE    1
 #define LAYER_EFFECT_SPARKS     2
+
 
 
 //MACROS UNIVERSE
@@ -232,7 +236,7 @@ typedef struct
 }Mapping;
 
 
-
+//USER:
 //Your physical structure...
 //this example is very simple and doesn't demonstrate the complexity of possibles mappings (see others examples like "le prestige infini")
 //Contain global objects, buffers and arrays
@@ -281,6 +285,12 @@ typedef struct
 }MappingStructure;
 
 
+
+
+
+
+
+
 typedef struct 
 {
   Color stampColor;  
@@ -326,6 +336,7 @@ typedef struct
   char programPreset;
   
 }Universe;
+
 
 
 typedef struct 

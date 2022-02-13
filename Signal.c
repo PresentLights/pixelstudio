@@ -332,6 +332,8 @@ void SignalPreset_FunctionDouble(Signal *s, uint8_t solfege, uint8_t function1, 
   st1->mirror = mirror;
 }
 
+//USER+
+//Add here your new SignalPreset_Functions()...
 /******************************************************************
                                   PLAY
                            ,-.        _.---._
@@ -379,7 +381,16 @@ uint8_t SignalPlay_Function(uint8_t solfege,uint8_t function, uint8_t phase)
 {
   return SignalPlay_FunctionOrder(solfege, function, 1, phase);
 }
-
+/*
+uint8_t SignalPlay_Function(uint8_t solfege,uint8_t function, uint8_t phase)
+{
+  Signal s;
+  memset(&s,0,sizeof(Signal));
+  SignalPreset(&s, solfege, function, 1, false, false, phase);
+  Signal_ExecuteSolfege(&s);
+  return s.val;
+}
+*/
 uint8_t SignalPlay_Bounce(uint8_t solfege,uint8_t phase){return SignalPlay_BounceOrder(solfege,2, phase);}
 uint8_t SignalPlay_Bounce4(uint8_t solfege,uint8_t phase){return SignalPlay_BounceOrder(solfege,4, phase);}
 uint8_t SignalPlay_Sinus(uint8_t solfege,uint8_t phase) {return SignalPlay_Function(solfege,SINUS, phase);}
@@ -406,6 +417,8 @@ uint8_t SignalPlay_TripConcave(uint8_t solfege, uint8_t order, uint8_t phase)
 }
 
 
+//USER+
+//Add here your new SignalPlay_Functions()...
 
 /*    FIN CODE    *****************************************************************************************************
 ***********************************************************************************************************************
