@@ -41,20 +41,6 @@
            |                                                                                        |
             ----------------------------------------------------------------------------------------               
            |                                                                                        |
-           |                           NOTICE FOR CODE MODIFICATION                                 |
-           |                           ----------------------------                                 |
-           |                                                                                        |
-           |     -Files that can be rewriten :                                                      |
-           |          -This PixelStudio.cpp/h                                                       |
-           |          -Mapping.c/h         (initialize your physical mapping & output presets types)|
-           |          -Program.c           (create your new programs & init programs groups)        |
-           |                                                                                        |
-           |     -You can also extend the framework library                                         |
-           |          -Mapping.c           (add new painting functionalities)                       |
-           |          -Signal.c            (add new signals)                                        |
-           |                                                                                        |
-            ----------------------------------------------------------------------------------------
-           |                                                                                        |
            |                                  FRAMEWORK SYNOPTIC                                    |
            |                                  ------------------                                    |
            |                                _________________________________________________       |
@@ -92,8 +78,6 @@
         \(   _.-"  -shimrod   * _|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___| 
          `--"                 *|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
 ***********************************************************O**********************************************************/  
-
-
 #include "Arduino.h"
 #include "ArduinoLog.h"
 #include <FastLED.h>
@@ -101,7 +85,6 @@
 #include "PixelStudio.h"
 #include "Program.h"
 #include "Mapping.h"
-
 
 /********************************************************************
                              DEFINITIONS
@@ -158,7 +141,6 @@ void InitPreset()
   ps.mappingPreset += digitalRead(PIN_ROTARY_ENCODER_MAPPING_PRESET_8) << 3;
   ps.mappingPreset ^= 0xF;
 
-
   ps.strip1Active=false;
   ps.strip2Active=false;
   ps.strip3Active=false;
@@ -186,13 +168,13 @@ void InitPreset()
 
 void setup()
 {
-
-  //Beat Tracker Logic Mode Input (CALM=0 - SYNC=1 - MATH=2)
-  //Pinmap in header : BTP.h
+  //Beat Tracker Pro Interface
+  //Logic Mode Input (CALM=0 / SYNC=1 / MATH=2 / LOST=3)
   pinMode(M0_PIN, INPUT_PULLUP);
   pinMode(M1_PIN, INPUT_PULLUP);
+  pinMode(PIN_ANALOG_ENABLED, OUTPUT); //Analog Switch for master / slave operation
 
-
+  //Rotary Encoders Presets
   pinMode(PIN_ROTARY_ENCODER_PROGRAM_PRESET_1, INPUT_PULLUP);
   pinMode(PIN_ROTARY_ENCODER_PROGRAM_PRESET_2, INPUT_PULLUP);
   pinMode(PIN_ROTARY_ENCODER_PROGRAM_PRESET_4, INPUT_PULLUP);
@@ -202,8 +184,7 @@ void setup()
   pinMode(PIN_ROTARY_ENCODER_MAPPING_PRESET_4, INPUT_PULLUP);
   pinMode(PIN_ROTARY_ENCODER_MAPPING_PRESET_8, INPUT_PULLUP);
 
-  
-  
+  //Push Buttons & Leds
   pinMode(PIN_BP1, INPUT_PULLUP);
   pinMode(PIN_BP2, INPUT_PULLUP);
   pinMode(PIN_BP3, INPUT_PULLUP);
@@ -214,12 +195,9 @@ void setup()
   pinMode(PIN_LED3, OUTPUT);
   pinMode(PIN_LED4, OUTPUT);
 
-  pinMode(PIN_ANALOG_ENABLED, OUTPUT);
+  InitPreset(); //Defines initial configuration (program & universe)
 
-
- 
-  InitPreset();
-
+  //FastLED library initialization
   if (ps.strip1Active)
     FastLED.addLeds<NEOPIXEL, PIN_STRIP_1>(leds_BAR_A, STRIP_BAR_NB_LEDS_MAX);
   if (ps.strip2Active)
@@ -228,12 +206,12 @@ void setup()
     FastLED.addLeds<NEOPIXEL, PIN_STRIP_3>(leds_BAR_C, STRIP_BAR_NB_LEDS_MAX);
 
 
-  
+  //Beat Tracker Pro Initialization
   BTP_Setup(SAW_PIN,SHAPE_PIN,M0_PIN,M1_PIN);
-  
+
+  //User program & mapping initialization
   Program_Setup();
   Mapping_Setup();
-
 
 
 
@@ -246,12 +224,6 @@ void setup()
   Log.notice("Program started\n");
   Debug("Program Preset =" , ps.programPreset);
   Debug("Mapping Preset =" , ps.mappingPreset);
-}
-
-
-void InitPresets()
-{
-  
 }
 
 /********************************************************************
@@ -309,11 +281,9 @@ extern "C"
   //Writen in assembly and not DMA, it stops the program
   //So the more leds there are, the slower the program
   //For giant compositions, it is preferable to use several 
-  //Arduino DUEs in master slave operation (not implemented here)
+  //Arduino DUEs in master slave operation
   void FastLED_Show(){FastLED.show();}
 }
-
-
 
 /**********************************************************************************************************************
 ***********************************************************************************************************************
@@ -331,15 +301,13 @@ extern "C"
         \(   _.-"  -shimrod   * _|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___| 
          `--"                 *|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
 ***********************************************************O**********************************************************/
-
-
-
+//Local Variables for user interface operation
 char lastBp1,lastBp2,lastBp3,lastBp4;
 uint32_t rebounceTimer;
 uint32_t blinkTimer;
 char blinkState;
 
-void ClearBPLeds()
+void UI_ClearBPLeds()
 {
   digitalWrite(PIN_LED1,0);
   digitalWrite(PIN_LED2,0);
@@ -348,7 +316,7 @@ void ClearBPLeds()
 }
 
 
-void BPsDisplayBinary(uint8_t value)
+void UI_DisplayBinary(uint8_t value)
 {
   digitalWrite(PIN_LED1,value & 1);
   digitalWrite(PIN_LED2,(value & 2)>>1);
@@ -357,7 +325,7 @@ void BPsDisplayBinary(uint8_t value)
 }
 
 
-void UpdateBPLeds()
+void UI_Update()
 {
   uint16_t blinkDelay;
   
@@ -369,7 +337,7 @@ void UpdateBPLeds()
             switch (btp.masterControlMode)
             {
               case CONTROL_MODE_AUTO:
-                ClearBPLeds();
+                UI_ClearBPLeds();
                 digitalWrite(PIN_LED1,1); 
                 break;
                 
@@ -380,12 +348,12 @@ void UpdateBPLeds()
                   if (blinkState)
                   {
                     blinkState=false;
-                    ClearBPLeds();
+                    UI_ClearBPLeds();
                   }
                   else
                   {
                     blinkState=true;
-                    BPsDisplayBinary(pm.prgIndexMANUAL);
+                    UI_DisplayBinary(pm.prgIndexMANUAL);
                   }
                 }
                 break;
@@ -394,7 +362,7 @@ void UpdateBPLeds()
           }
           else
           {
-            ClearBPLeds();
+            UI_ClearBPLeds();
             digitalWrite(PIN_LED1,1); 
           }
           
@@ -412,12 +380,12 @@ void UpdateBPLeds()
             if (blinkState)
             {
               blinkState=false;
-              ClearBPLeds();
+              UI_ClearBPLeds();
             }
             else
             {
               blinkState=true;
-              BPsDisplayBinary(pm.prgIndexMANUAL);
+              UI_DisplayBinary(pm.prgIndexMANUAL);
             }
           }
           
@@ -431,38 +399,38 @@ void UpdateBPLeds()
 }
 
 
-void Change_ManualProgram(uint8_t up)
+void UI_ChangeManualProgram(uint8_t up)
 {
   btp.controlMode = CONTROL_MODE_MANUAL;
   Program_Increment(PROGRAM_MODE_MANUAL, up);
-  AD_ProgramRandomReload();
+  BTP_ProgramRandomReload();
   Layers_Clear(); //Clear all persist color
 }
 
-void Click_BP1()
+void UI_Click_1()
 {
   btp.controlMode = CONTROL_MODE_AUTO;
   pm.prgIndexMANUAL = btp.masterManualIndex; //on se replace sur le programme manuel du maitre
   BTP_Prompt_SendControlMode();
 }
 
-void Click_BP2()
+void UI_Click_2()
 {
-  Change_ManualProgram(true);
+  UI_ChangeManualProgram(true);
   BTP_Prompt_SendManualIndex();
   BTP_Prompt_SendControlMode();
 }
 
 
-void Click_BP3()
+void UI_Click_3()
 {
-  Change_ManualProgram(false);
+  UI_ChangeManualProgram(false);
   BTP_Prompt_SendManualIndex();
   BTP_Prompt_SendControlMode();
 }
 
 
-void Click_BP4()
+void UI_Click_4()
 {
   if (btp.blackout == 1)
     btp.blackout = 0;
@@ -476,7 +444,7 @@ void Click_BP4()
 
 
 
-void ProcessBP()
+void UI_Process()
 {
   
   if (millis() - rebounceTimer > 50)
@@ -486,7 +454,7 @@ void ProcessBP()
     if (bp1 != lastBp1 && bp1==0)
     {
       rebounceTimer = millis();
-      Click_BP1();
+      UI_Click_1();
     }
     lastBp1 = bp1;
 
@@ -495,7 +463,7 @@ void ProcessBP()
     if (bp2 != lastBp2 && bp2==0)
     {
       rebounceTimer = millis();
-      Click_BP2();
+      UI_Click_2();
     }
     lastBp2 = bp2;
 
@@ -504,7 +472,7 @@ void ProcessBP()
     if (bp3 != lastBp3 && bp3==0)
     {
       rebounceTimer = millis();
-      Click_BP3();
+      UI_Click_3();
     }
     lastBp3 = bp3;
 
@@ -513,7 +481,7 @@ void ProcessBP()
     if (bp4 != lastBp4 && bp4==0)
     {
       rebounceTimer = millis();
-      Click_BP4();
+      UI_Click_4();
     }
     lastBp4 = bp4;
   }
@@ -540,11 +508,12 @@ void ProcessBP()
 
 void loop()
 {
-  AD_Loop();       //Beat Tracker Pro driver runtime
-  Program_Loop();  //Your lighting application
-  ProcessBP();
+  BTP_Loop();      //Beat Tracker Pro driver runtime
+  Program_Loop();  //User lighting programs
 
-  UpdateBPLeds();
+  //User Interface
+  UI_Process();
+  UI_Update();
 
   //Automatic analog switch for master/slave mode
   digitalWrite(PIN_ANALOG_ENABLED,btp.slave^1);

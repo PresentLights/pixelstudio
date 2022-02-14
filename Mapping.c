@@ -138,16 +138,11 @@ void Mapping_InitUniverse(uint8_t address, uint8_t barLength)
   Strip_LedMapInit(&uni->Map_Bar4,  &uni->Frag_Bar4, 1); 
 }
 
-
-
-
-
-//USER:
 //Configure your physical led strip structure
 //this example is very simple and doesn't demonstrate the complexity of possibles mappings (see others examples like "le prestige infini")
 void Mapping_Setup() 
 {
-
+  //Bar Length Binary configuration 0= 1m / 1=1,5m
   if (ps.mappingPreset & 1)
     Mapping_InitUniverse(0,42); 
   else
@@ -162,13 +157,10 @@ void Mapping_Setup()
     Mapping_InitUniverse(2,42); 
   else
     Mapping_InitUniverse(2,28); 
-    
- 
-
+  
   Layers_SetSize(42);
   
 }
-
 
 /********************************************************************
                         MAPPING PRESETS - PATCH
@@ -178,11 +170,11 @@ void Mapping_Setup()
                           /      \
                           `.__|_.'
 ********************************************************************/
-
-LedMap *Getdices4(uint8_t numBar)
+//Switch led bars according to the current dices (randomized chain)
+LedMap *LedMap_GetFromDices(uint8_t numBar)
 {
   uint8_t disorderIndex = btp.dices4[numBar-1];
-//  uint8_t disorderIndex = numBar-1;  //Bypass
+//  uint8_t disorderIndex = numBar-1;  //Bypass, return correct numBar for tests
   switch(disorderIndex)
   {
     case 0: return &mm.currentUniverse->Map_Bar1;
@@ -194,79 +186,75 @@ LedMap *Getdices4(uint8_t numBar)
 }
 
 
-//These following functions are called by your composition programs
-
-//USER
-//This function is usefull to limit your code and preset Mapping* objects
+//These following functions are called by the compositions programs
+//This function is usefull to limit the code and preset Mapping* objects
 //Each Mapping is composed by a number of LedMap, it will paint the same pattern in each of them even if their sizes difers
 void Mapping_Preset(Mapping *m, uint8_t preset)
 {
-
-  
   switch(preset)
   {
     case MAP_BAR_1: 
       m->nbMaps = 1;
-      m->maps[0] = Getdices4(1);
+      m->maps[0] = LedMap_GetFromDices(1);
       break;
 
     case MAP_BAR_2:
       m->nbMaps = 1;
-      m->maps[0] = Getdices4(2);
+      m->maps[0] = LedMap_GetFromDices(2);
       break;
 
     case MAP_BAR_3:
       m->nbMaps = 1;
-      m->maps[0] = Getdices4(3);
+      m->maps[0] = LedMap_GetFromDices(3);
       break;
 
     case MAP_BAR_4:
       m->nbMaps = 1;
-      m->maps[0] = Getdices4(4);
+      m->maps[0] = LedMap_GetFromDices(4);
       break;
 
     case MAP_BAR_ODD:
       m->nbMaps = 2;
-      m->maps[0] = Getdices4(2);
-      m->maps[1] = Getdices4(4);
+      m->maps[0] = LedMap_GetFromDices(2);
+      m->maps[1] = LedMap_GetFromDices(4);
       break;
 
     case MAP_BAR_EVEN:
       m->nbMaps = 2;
-      m->maps[0] = Getdices4(1);
-      m->maps[1] = Getdices4(3);
+      m->maps[0] = LedMap_GetFromDices(1);
+      m->maps[1] = LedMap_GetFromDices(3);
       break;
 
     case MAP_BAR_LEFT:
       m->nbMaps = 2;
-      m->maps[0] = Getdices4(1);
-      m->maps[1] = Getdices4(2);
+      m->maps[0] = LedMap_GetFromDices(1);
+      m->maps[1] = LedMap_GetFromDices(2);
       break;
 
     case MAP_BAR_RIGHT:
       m->nbMaps = 2;
-      m->maps[0] = Getdices4(3);
-      m->maps[1] = Getdices4(4);
+      m->maps[0] = LedMap_GetFromDices(3);
+      m->maps[1] = LedMap_GetFromDices(4);
       break;
 
     case MAP_BAR_CENTER:
       m->nbMaps = 2;
-      m->maps[0] = Getdices4(2);
-      m->maps[1] = Getdices4(3);
+      m->maps[0] = LedMap_GetFromDices(2);
+      m->maps[1] = LedMap_GetFromDices(3);
       break;
 
     case MAP_BAR_EXT:
       m->nbMaps = 2;
-      m->maps[0] = Getdices4(1);
-      m->maps[1] = Getdices4(4);
+      m->maps[0] = LedMap_GetFromDices(1);
+      m->maps[1] = LedMap_GetFromDices(4);
       break;
 
     case MAP_BAR_ALL:
       m->nbMaps = 4;
-      m->maps[0] = Getdices4(1);
-      m->maps[1] = Getdices4(2);
-      m->maps[2] = Getdices4(3);
-      m->maps[3] = Getdices4(4);
+      m->maps[0] = LedMap_GetFromDices(1);
+      m->maps[1] = LedMap_GetFromDices(2);
+      m->maps[2] = LedMap_GetFromDices(3);
+      m->maps[3] = LedMap_GetFromDices(4);
       break;
 
   }
@@ -444,12 +432,6 @@ void Paint_Degrade(Color c1,Color c2, Mapping *m)
 }
 
 
-
-//USER+
-//Add here your new Paint_Functions()...
-
-
-
 void Layers_Clear()
 {
   int i,j,k;
@@ -464,8 +446,7 @@ void Layers_Clear()
       l->rndFlash = 0;
       l->rndBurn = 0;
       l->rndColor = 0;
-  
-    
+      
       for (j=0;j<l->nbPoints;j++)
       {
         LayerPixel *pix = &l->pixels[j];
@@ -525,8 +506,8 @@ void LayerEffect_Degrade(Layer *layer, LayerPixel *pix, float e)
   uint8_t x = (uint8_t)e*256;
   uint8_t y = Signal_Compress(x, true);
   float intens = (float)y / 255;
-  Color c1 = AD_GetColor(layer->colorID);
-  Color c2 = AD_GetColor((layer->colorID + 1)%4);
+  Color c1 = BTP_GetColor(layer->colorID);
+  Color c2 = BTP_GetColor((layer->colorID + 1)%4);
   Color color = Color_Degrade(c1, c2, e);
   pix->color = Color_Brightness(color, intens);
 }
@@ -696,17 +677,12 @@ void Layer_FeedPersist(Layer *layer, uint8_t x, Color color, char fill)
 
         if (layer->rndScale)
           pix->scale = GetRandom(layer->rndScale)+layer->scale;
-          
-    
-
-
+ 
       }
     }
   }
   layer->lastPos = pointPos; //filling memory
 }
-
-
 
 
 void Paint_PlotPersist(uint8_t x, uint8_t colorID, Mapping *m, Layer *layer)
@@ -715,12 +691,11 @@ void Paint_PlotPersist(uint8_t x, uint8_t colorID, Mapping *m, Layer *layer)
   layer->effect = LAYER_EFFECT_PERSIST;
 
   layer->colorID = colorID;
-  Color color = AD_GetColor(colorID);
+  Color color = BTP_GetColor(colorID);
   Layer_FeedPersist(layer, x, color, true);
   Layer_PaintPersist(layer, m);
   Layer_ExecutePersist(layer);
 }
-
 
 
 void Paint_PlotSparks(uint8_t x, uint8_t colorID, Mapping *m, Layer *layer)
@@ -730,7 +705,7 @@ void Paint_PlotSparks(uint8_t x, uint8_t colorID, Mapping *m, Layer *layer)
 
   
   layer->colorID = colorID;
-  Color color = AD_GetColor(colorID);
+  Color color = BTP_GetColor(colorID);
   Layer_FeedPersist(layer, x, color, true);
   Layer_PaintPersist(layer, m);
   Layer_ExecutePersist(layer);

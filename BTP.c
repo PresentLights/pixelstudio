@@ -70,8 +70,8 @@
 **********************************O*********************************/
 //Global shared objets
 BTP btp;
-extern ProgramManager pm;
 Prompt prompt;
+extern ProgramManager pm;
 
 /**********************************************************************************************************************
 ***********************************************************************************************************************
@@ -85,7 +85,7 @@ Prompt prompt;
   |_________|   *   |       |       |       |       |       |       |       |       |       |       |       |       |     
 ***********************************************************O**********************************************************/
 //Palette Initializer (cf. Tools.c)
-void InitPalette4(Palette *p, uint32_t c1,uint32_t c2,uint32_t c3,uint32_t c4)
+void BTP_InitPalette4(Palette *p, uint32_t c1,uint32_t c2,uint32_t c3,uint32_t c4)
 {
   p->colors[0] = Color_FromInt(c1);
   p->colors[1] = Color_FromInt(c2);
@@ -104,28 +104,30 @@ void BTP_InitPalette()
 //BTP Driver Initializer
 void BTP_Setup(int16_t pinSaw,int16_t pinShape,int16_t pinM0,int16_t pinM1) 
 {
+  //Pin configuration
   btp.pinSaw = pinSaw;
   btp.pinShape = pinShape;
   btp.pinM0 = pinM0;
   btp.pinM1 = pinM1;
   
-   //Palettes
-  InitPalette4(&btp.palettes[0], 0x49006E,0x1D6C00,0xFF6600,0x6F7D00);//Candy
-  InitPalette4(&btp.palettes[1], 0xB280FF,0x2ED388,0x00A01F,0x0D0074);//Azure
-  InitPalette4(&btp.palettes[2], 0xC84D0B,0xFFD220,0xE46927,0xCC3C00);//Gold
-  InitPalette4(&btp.palettes[3], 0xAE3D00,0xC91D00,0xD80000,0x408000);//Mexico
-  InitPalette4(&btp.palettes[4], 0x65E0FF,0xCC00FF,0x4040FF,0x8FFF40);//Well Being
-  InitPalette4(&btp.palettes[5], 0x00FF66,0x00FF00,0xCCFF00,0x00FF66);//Jungle
-  InitPalette4(&btp.palettes[6], 0xFF2079,0x2020FF,0xFF2020,0xD2FF20);//Pastel
-  InitPalette4(&btp.palettes[7], 0xFF1812,0xD15011,0xBC3D00,0xAB0400);//Love
-  InitPalette4(&btp.palettes[8], 0xFFD840,0x40FFD8,0xFF6600,0xC6A0FF);//Sky
+  //Palettes
+  BTP_InitPalette4(&btp.palettes[0], 0x49006E,0x1D6C00,0xFF6600,0x6F7D00);//Candy
+  BTP_InitPalette4(&btp.palettes[1], 0xB280FF,0x2ED388,0x00A01F,0x0D0074);//Azure
+  BTP_InitPalette4(&btp.palettes[2], 0xC84D0B,0xFFD220,0xE46927,0xCC3C00);//Gold
+  BTP_InitPalette4(&btp.palettes[3], 0xAE3D00,0xC91D00,0xD80000,0x408000);//Mexico
+  BTP_InitPalette4(&btp.palettes[4], 0x65E0FF,0xCC00FF,0x4040FF,0x8FFF40);//Well Being
+  BTP_InitPalette4(&btp.palettes[5], 0x00FF66,0x00FF00,0xCCFF00,0x00FF66);//Jungle
+  BTP_InitPalette4(&btp.palettes[6], 0xFF2079,0x2020FF,0xFF2020,0xD2FF20);//Pastel
+  BTP_InitPalette4(&btp.palettes[7], 0xFF1812,0xD15011,0xBC3D00,0xAB0400);//Love
+  BTP_InitPalette4(&btp.palettes[8], 0xFFD840,0x40FFD8,0xFF6600,0xC6A0FF);//Sky
   btp.paletteIndex = 0;
   BTP_InitPalette();
 
-  
+  //Initial logic
   btp.controlMode = CONTROL_MODE_AUTO;
   btp.blackout = false;
 
+  //Initial randomized chain
   SetDisorderChain(&btp.dices4, 4);
   SetDisorderChain(&btp.dices16, 16);
 }
@@ -150,7 +152,7 @@ void BTP_Setup(int16_t pinSaw,int16_t pinShape,int16_t pinM0,int16_t pinM1)
 
 
 /********************************************************************
-                         MASTER / SLAVE PROMPT
+                         MASTER / SLAVE COMMUNICATION
                                _________
                               / ======= \
                              / __________\
@@ -401,11 +403,6 @@ void BTP_Prompt_FurnishByte(uint8_t car)
  // Serial_Write(car);
 }
 
-
-
-
-
-
 /********************************************************************
                          VOLUME & COLORS TOOLS
                                     ____________________________
@@ -415,8 +412,6 @@ void BTP_Prompt_FurnishByte(uint8_t car)
           jgs                     `//__(____________________)___/
 
 **********************************O*********************************/
-
-
 //Read volume imput records from present to past
 uint8_t BTP_ReadInput(uint8_t x)
 {
@@ -433,19 +428,19 @@ uint8_t BTP_ScaleInputRange(uint8_t vol)
 }
 
 //Read range scaled volume imput records from present to past
-uint8_t AD_ReadRangedInput(uint8_t x)
+uint8_t BTP_ReadRangedInput(uint8_t x)
 {
   return BTP_ScaleInputRange(BTP_ReadInput(x));
 }
 
 //Get color from palette including cross color
-Color AD_GetColor(uint8_t index)
+Color BTP_GetColor(uint8_t index)
 {
   uint8_t disorderIndex = btp.dices4[index];
   return btp.palette.colors[disorderIndex];
 }
 
-uint8_t AD_GetRollColorID_4To2(uint8_t index)
+uint8_t BTP_GetRollColorID_4To2(uint8_t index)
 {
   uint8_t colorID = 0;
   switch(index)
@@ -456,17 +451,17 @@ uint8_t AD_GetRollColorID_4To2(uint8_t index)
   return colorID;
 }
 
-Color AD_GetRollColor_4To2(uint8_t index)
+Color BTP_GetRollColor_4To2(uint8_t index)
 {
-  uint8_t colorID = AD_GetRollColorID_4To2(index);
-  return AD_GetColor(colorID);
+  uint8_t colorID = BTP_GetRollColorID_4To2(index);
+  return BTP_GetColor(colorID);
 }
 
 //A Eviter comme effet visuel
 //Get color from palette including cross color and sound dynamic brightness
-Color AD_GetDynamicColor(uint8_t index)
+Color BTP_GetDynamicColor(uint8_t index)
 {
-  Color color = AD_GetColor(index);
+  Color color = BTP_GetColor(index);
   uint8_t dyn = BTP_ScaleInputRange(btp.dynamic);
   float brightness = (float)dyn/255;
   color = Color_Brightness(color, brightness);
@@ -482,10 +477,8 @@ Color AD_GetDynamicColor(uint8_t index)
                             \  0   ( '-._/ //
                       jgs    '-.____'.     y 
 **********************************O*********************************/
-
-
 //Execute colors transitions
-void AD_ProcessPaletteTransition()
+void BTP_ProcessPaletteTransition()
 {
   if (millis() - btp.paletteTransitionTimer > 50 &&  btp.paletteTransitionTimer)
   {
@@ -513,7 +506,7 @@ void AD_ProcessPaletteTransition()
   }
 }
 
-void AD_ProgramRandomReload()
+void BTP_ProgramRandomReload()
 {
   if (btp.mode == MODE_CALM) return; //Evite les sursauts de couleurs lors des changements auto de mappings
   SetDisorderChain(&btp.dices4, 4); //Automaticaly change order of led bar mapping
@@ -525,7 +518,7 @@ void AD_ProgramRandomReload()
   BTP_Prompt_SendDices();
 }
 
-void AD_SyncProgram()
+void BTP_SyncProgram()
 {
   switch(btp.controlMode)
   {
@@ -543,25 +536,22 @@ void AD_SyncProgram()
 }
 
 
-void AD_OnModeChange()
+void BTP_OnModeChange()
 {
   if (btp.controlMode == CONTROL_MODE_AUTO && btp.mode == MODE_MATH)
   {
-    AD_OnProgramChange();
+    BTP_OnProgramChange();
     btp.t=0;
   }
-  
-  AD_SyncProgram();
+  BTP_SyncProgram();
   BTP_Prompt_SendMode();
-
-
 }
 
-void AD_OnProgramChange()
+void BTP_OnProgramChange()
 {
   if (btp.slave) return;
   Program_IncrementCurrent(); //Auto Change Program
-  AD_ProgramRandomReload();
+  BTP_ProgramRandomReload();
   Layers_Clear(); //Clear all persist color
 }
 
@@ -575,9 +565,9 @@ void AD_OnProgramChange()
 **********************************O*********************************/
 
 //Comes here at each beat pulsation
-void AD_Tick()
+void BTP_Tick()
 {
-  //pulsations time 0 to 31
+  //rythmical value from 0 to 31
   btp.t++;
   btp.t %= 32;
 
@@ -599,20 +589,15 @@ void AD_Tick()
   //Program change every 16 pulsations
   uint8_t programSynchro = btp.t16;
   if (programSynchro == 0 && programSynchro != btp.lastProgramTransitionTime && btp.controlMode == CONTROL_MODE_AUTO)
-    AD_OnProgramChange();
+    BTP_OnProgramChange();
   btp.lastProgramTransitionTime = programSynchro;
 
-
-
   if(!btp.slave || btp.controlMode == CONTROL_MODE_MANUAL)
-    AD_SyncProgram(); //To syncronise manual change (prevent glitchs)
-
-
-
+    BTP_SyncProgram(); //To syncronise manual change (prevent glitchs)
 }
 
 
-void AD_HalfTick()
+void BTP_HalfTick()
 {
   if (!btp.slave)
     BTP_Prompt_SendTime();
@@ -639,10 +624,9 @@ void AD_HalfTick()
 //Read SHAPE_PIN gives volume shape for sound reactive effects (usefull in SCAN MODE)
 //Filter inputs in case of main supply parasits
 //Analyses sound dynamics and beats increments
-void AD_Synchronise()
+void BTP_Synchronise()
 {
   int i;
-
 
   //FILTERED SYNCHRO
   uint8_t sync = analogRead(btp.pinSaw)>>2;
@@ -667,26 +651,16 @@ void AD_Synchronise()
     btp.sync = sum >> 2;
   }
   
- //   Debug("SYNC=", btp.sync);
-
-
-
-  analogWrite(DAC0,btp.sync);
   
   //Detection front descendant -> Tick
   if (btp.sync<btp.lastSync-128) 
-      AD_Tick();
+      BTP_Tick();
   btp.lastSync = btp.sync;
 
   if (btp.sync > 128 && btp.lastHalfSync <= 128) 
-      AD_HalfTick();
+      BTP_HalfTick();
   btp.lastHalfSync = btp.sync;
 
-
-
-
-
-  
   //FILTERED VOLUME
   uint8_t vol = (uint8_t)MapBoundInt16(analogRead(btp.pinShape),VOLUME_CALIB_MIN,VOLUME_CALIB_MAX,0,255);
   if (micros() - btp.volumeFilterTimer > 500)
@@ -738,7 +712,7 @@ void AD_Synchronise()
 
 
 //Read logics mode digital inputs
-void AD_ReadMode()
+void BTP_ReadMode()
 {
   if (btp.slave) return;
   
@@ -749,14 +723,9 @@ void AD_ReadMode()
   if (btp.newMode != btp.mode)
   {
     btp.mode = btp.newMode;
-    AD_OnModeChange();
+    BTP_OnModeChange();
   }
 }
-
-
-
-
-
 
 /**********************************************************************************************************************
 ***********************************************************************************************************************
@@ -772,13 +741,11 @@ void AD_ReadMode()
 ***********************************************************O**********************************************************/
 
 //Execute Beat Tracker Pro Driver
-void AD_Loop() 
+void BTP_Loop() 
 {
-
-  AD_ReadMode();
-  AD_ProcessPaletteTransition();
-  AD_Synchronise();
-
+  BTP_ReadMode();
+  BTP_ProcessPaletteTransition();
+  BTP_Synchronise();
 
   //Slave Mode Watchdog Timeout
   if (millis() - btp.slaveTimer > 2000) //master mode return after 2s 
@@ -786,10 +753,7 @@ void AD_Loop()
     btp.slaveTimer = millis();
     btp.slave = false;
   }
-
-    
 }
-
 
 /*    FIN CODE    *****************************************************************************************************
 ***********************************************************************************************************************
